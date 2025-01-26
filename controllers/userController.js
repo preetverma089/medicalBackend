@@ -86,6 +86,7 @@ export const Login = async (req, res) => {
     res.send({
       message: "user loggedIN",
       authToken: token,
+      userDetails: { email: isUserExist.email, fullName: isUserExist.fullName },
       status: 200,
     });
   } catch (error) {
