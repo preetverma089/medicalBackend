@@ -1,5 +1,6 @@
 import userSchema from "../models/userRegister.js";
 import * as bcrypt from "bcrypt";
+import Jwt from "jsonwebtoken";
 export const getUsers = async (req, res) => {
   try {
     const users = await userSchema.find().lean();
@@ -45,5 +46,49 @@ export const Register = async (req, res) => {
     });
   } catch (error) {
     res.send({ message: error.message, status: 500 });
+  }
+};
+
+export const Login = async (req, res) => {
+  try {
+    const user = {
+      email: req.body.email,
+      password: req.body.password,
+    };
+
+    const isUserExist = await userSchema.findOne({ email: user.email });
+    if (!isUserExist)
+      return res.send({
+        message: "user not exists",
+        status: 401,
+      });
+    const isPasswordmatch = await bcrypt.compare(
+      user.password,
+      isUserExist.password
+    );
+    if (!isPasswordmatch)
+      return res.send({
+        message: "credentials wrong ",
+        status: 401,
+      });
+
+    const token = Jwt.sign(
+      {
+        userId: isUserExist._id,
+        userEmail: isUserExist.email,
+        userName: isUserExist.fullName,
+      },
+      "USERDETAILS",
+      {
+        expiresIn: "1d",
+      }
+    );
+    res.send({
+      message: "user loggedIN",
+      authToken: token,
+      status: 200,
+    });
+  } catch (error) {
+    res.send({ message: "something went wrong", status: 500 });
   }
 };
